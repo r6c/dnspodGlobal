@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/libdns/libdns"
-	d "github.com/nrdcg/dnspod-go"
+	d "github.com/r6c/dnspodGlobal-go"
 )
 
 // Client ...

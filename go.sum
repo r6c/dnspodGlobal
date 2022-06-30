@@ -2,5 +2,5 @@ github.com/libdns/libdns v0.0.0-20200501023120-186724ffc821 h1:663opx/RKxiISi1oz
 github.com/libdns/libdns v0.0.0-20200501023120-186724ffc821/go.mod h1:yQCXzk1lEZmmCPa857bnk4TsOiqYasqpyOEeSObbb40=
 github.com/libdns/libdns v0.2.1 h1:Wu59T7wSHRgtA0cfxC+n1c/e+O3upJGWytknkmFEDis=
 github.com/libdns/libdns v0.2.1/go.mod h1:yQCXzk1lEZmmCPa857bnk4TsOiqYasqpyOEeSObbb40=
-github.com/nrdcg/dnspod-go v0.4.0 h1:c/jn1mLZNKF3/osJ6mz3QPxTudvPArXTjpkmYj0uK6U=
-github.com/nrdcg/dnspod-go v0.4.0/go.mod h1:vZSoFSFeQVm2gWLMkyX61LZ8HI3BaqtHZWgPTGKr6KQ=
+github.com/r6c/dnspodGlobal-go v0.4.1-0.20220630051153-28f3af61ea62 h1:y+2SyLv5JbOTcBhZrhKbuiIkBUA/eJgYMunn+Z5BleI=
+github.com/r6c/dnspodGlobal-go v0.4.1-0.20220630051153-28f3af61ea62/go.mod h1:3W8R5UE3yxdK/Dm6RgMR4E4p9Aos4QJcjTLsvtuzuto=
