@@ -1,90 +1,104 @@
-# DNSPOD for `libdns`
+# DNSPod libdns Provider
 
-[![godoc reference](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/libdns/dnspod)
+A [libdns](https://github.com/libdns/libdns) provider for DNSPod DNS service.
 
-This package implements the libdns interfaces for the [DNSPOD API](https://www.dnspod.cn/docs/index.html) (using the Go implementation from: https://github.com/nrdcg/dnspod-go)
+## ⚠️ 重要的API要求 / Important API Requirements
 
-## Authenticating
+### UserAgent 设置
+DNSPod API 要求必须设置正确格式的 UserAgent，否则账户将被封禁：
+- **格式要求**: `程序英文名称/版本(联系邮箱)`
+- **示例**: `libdns-dnspod/1.0.0 (github.com/r6c/dnspodGlobal)`
+- **已修复**: ✅ 当前代码使用正确的 UserAgent 格式
 
-To authenticate you need to supply a [DNSPOD API token](https://support.dnspod.cn/Kb/showarticle/tsid/227/).
+### 其他API规范
+- ✅ 使用 HTTPS (`https://dnsapi.cn/`)
+- ✅ 仅支持 POST 方法
+- ✅ UTF-8 编码
+- ✅ login_token 认证格式：`ID,Token`
+- ✅ 中文线路名称："默认"
 
-## Example
+## 安装
 
-Here's a minimal example of how to get all your DNS records using this `libdns` provider (see `_example/main.go`)
+```bash
+go get github.com/r6c/dnspodGlobal
+```
 
+## 使用方法
+
+### 环境变量设置
+```bash
+export DNSPOD_TOKEN="your_id,your_token"
+export ZONE="your-domain.com"
+```
+
+### 代码示例
 ```go
 package main
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"time"
-
-	dnspod "github.com/libdns/dnspod"
-
+	
+	dnspod "github.com/r6c/dnspodGlobal"
 	"github.com/libdns/libdns"
 )
 
 func main() {
-	token := os.Getenv("DNSPOD_TOKEN")
-	if token == "" {
-		fmt.Printf("DNSPOD_TOKEN not set\n")
-		return
+	provider := dnspod.Provider{
+		LoginToken: "your_id,your_token",
 	}
-	zone := os.Getenv("ZONE")
-	if zone == "" {
-		fmt.Printf("ZONE not set\n")
-		return
-	}
-	provider := dnspod.Provider{APIToken: token}
-
-	records, err := provider.GetRecords(context.TODO(), zone)
-	if err != nil {
-		fmt.Printf("ERROR: %s\n", err.Error())
-	}
-
-	testName := "libdns-test"
-	testID := ""
-	for _, record := range records {
-		fmt.Printf("%s (.%s): %s, %s\n", record.Name, zone, record.Value, record.Type)
-		if record.Name == testName {
-			testID = record.ID
-		}
-
-	}
-
-	if testID != "" {
-		// fmt.Printf("Delete entry for %s (id:%s)\n", testName, testID)
-		// _, err = provider.DeleteRecords(context.TODO(), zone, []libdns.Record{libdns.Record{
-		// 	ID: testID,
-		// }})
-		// if err != nil {
-		// 	fmt.Printf("ERROR: %s\n", err.Error())
-		// }
-		// Set only works if we have a record.ID
-		fmt.Printf("Replacing entry for %s\n", testName)
-		_, err = provider.SetRecords(context.TODO(), zone, []libdns.Record{libdns.Record{
-			Type:  "TXT",
-			Name:  testName,
-			Value: fmt.Sprintf("Replacement test entry created by libdns %s", time.Now()),
-			TTL:   time.Duration(600) * time.Second,
-			ID:    testID,
-		}})
-		if err != nil {
-			fmt.Printf("ERROR: %s\n", err.Error())
-		}
-	} else {
-		fmt.Printf("Creating new entry for %s\n", testName)
-		_, err = provider.AppendRecords(context.TODO(), zone, []libdns.Record{libdns.Record{
-			Type:  "TXT",
-			Name:  testName,
-			Value: fmt.Sprintf("This is a test entry created by libdns %s", time.Now()),
-			TTL:   time.Duration(600) * time.Second,
-		}})
-		if err != nil {
-			fmt.Printf("ERROR: %s\n", err.Error())
-		}
-	}
+	
+	// 获取记录
+	records, err := provider.GetRecords(context.TODO(), "example.com")
+	
+	// 添加记录
+	newRecords, err := provider.AppendRecords(context.TODO(), "example.com", []libdns.Record{
+		libdns.TXT{
+			Name: "test.example.com.",
+			Text: "Hello World",
+			TTL:  600 * time.Second,
+		},
+	})
+	
+	// 更新记录
+	updatedRecords, err := provider.SetRecords(context.TODO(), "example.com", newRecords)
+	
+	// 删除记录
+	deletedRecords, err := provider.DeleteRecords(context.TODO(), "example.com", updatedRecords)
 }
 ```
+
+## 支持的记录类型
+
+- A/AAAA (使用 `libdns.Address`)
+- TXT (使用 `libdns.TXT`) 
+- CNAME (使用 `libdns.CNAME`)
+- MX (使用 `libdns.MX`)
+- 其他类型 (使用 `libdns.RR`)
+
+## API Token 获取
+
+1. 登录 [DNSPod 控制台](https://console.dnspod.cn/)
+2. 进入 [密钥管理](https://console.dnspod.cn/account/token) 页面
+3. 创建新的 API Token
+4. 格式为：`ID,Token` (用逗号分隔)
+
+## 运行示例
+
+```bash
+DNSPOD_TOKEN="your_id,your_token" ZONE="your-domain.com" go run _example/main.go
+```
+
+## 注意事项
+
+⚠️ **避免API滥用**: DNSPod对API使用有严格限制，请避免：
+- 短时间内大量操作
+- 无变化的重复请求
+- 程序死循环
+- 用于大量测试
+
+违反将导致账户被临时封禁（通常1小时）。
+
+## 许可证
+
+MIT License
